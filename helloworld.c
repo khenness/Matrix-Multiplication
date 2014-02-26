@@ -5,6 +5,13 @@
 
 #define NUM_THREADS 6 
 
+
+double[][] matrixMult(double[][] m1, double[][] m2){
+
+
+}
+
+
 void *PrintHello(void *threadid) { 
 	printf("\n%d: Hello World!\n", threadid); 
 	pthread_exit(NULL); 
