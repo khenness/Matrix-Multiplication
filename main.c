@@ -1,7 +1,7 @@
 /*
 CS3014 - CONCURRENT SYSTEMS I
 Neil Hyland (11511677)
-Kevin Hennessy ()
+Kevin Hennessy (11726665)
 
 NOTE: Compile with C99 standard!
 */
@@ -13,57 +13,51 @@ NOTE: Compile with C99 standard!
 #include <omp.h>
 
 // Matrix sizes:
-int NUM_COLUMNS_A = 1000;
-int NUM_ROWS_A = 1000;
-int NUM_COLUMNS_B = 1000;
-int NUM_ROWS_B = 1000;
-int NUM_COLUMNS_C = 1000;
-int NUM_ROWS_C = 1000;
+int NUM_COLUMNS_A;
+int NUM_ROWS_A;
+int NUM_COLUMNS_B;
+int NUM_ROWS_B;
+int NUM_COLUMNS_C;
+int NUM_ROWS_C;
 
 
 // PROGRAM ENTRY POINT:
 int main(int argc, char **argv)
 {
+    /*
+    Create & initialise the matrices, then call the parallel matrix multiplication function.
+    */
+    srand(time(NULL));
+    printf("\nCS3014 - CONCURRENT SYSTEMS I: Matrix Multiplication Lab\n");
+    printf("=======================================================================\n\n");
 
+    /*
+    Take matrix dimensions input from user
+    */
+    int num;
+    //if NUM_COLUMNS_A != NUM_ROWS_B the calculation is undefined.
+    printf("\nEnter NUM_COLUMNS_A + NUM_ROWS_B: ");
+    scanf("%d", &num);
+    NUM_COLUMNS_A = num;
+    NUM_ROWS_B = NUM_COLUMNS_A;
+    printf("Enter NUM_ROWS_A: ");
+    scanf("%d", &num);
+    NUM_ROWS_A = num;
+    printf("Enter NUM_COLUMNS_B: ");
+    scanf("%d", &num);
+    NUM_COLUMNS_B = num;
+    printf("\n");
+    NUM_COLUMNS_C =NUM_ROWS_A;
+    NUM_ROWS_C=NUM_COLUMNS_B;
 
-	/*
-	Create & initialise the matrices, then call the parallel matrix multiplication function.
-	*/
-	srand(time(NULL));
-	printf("\nCS3014 - CONCURRENT SYSTEMS I: Matrix Multiplication Lab\n");
-	printf("=======================================================================\n\n");
+    printf("Creating matrices and populating them with random data...\n");
+    double **a = malloc(NUM_COLUMNS_A * sizeof(double*));
+    double **b = malloc(NUM_COLUMNS_B * sizeof(double*));
+    double **c = malloc(NUM_COLUMNS_C * sizeof(double*));
 
-        /*
-        Take matrix dimensions input from user
-        */
-        int defined = 0;
-        int num;
-        //if NUM_COLUMNS_A != NUM_ROWS_B the calculation is undefined.
-        printf("\nEnter NUM_COLUMNS_A + NUM_ROWS_B: ");
-        scanf("%d", &num);
-        NUM_COLUMNS_A = num;
-        NUM_ROWS_B = NUM_COLUMNS_A;
-        printf("Enter NUM_ROWS_A: ");
-        scanf("%d", &num);
-        NUM_ROWS_A = num;
-        printf("Enter NUM_COLUMNS_B: ");
-        scanf("%d", &num);
-        NUM_COLUMNS_B = num;
-        printf("\n");
-        NUM_COLUMNS_C =NUM_ROWS_A;
-        NUM_ROWS_C=NUM_COLUMNS_B;
-        //NUM_COLUMNS_C =NUM_COLUMNS_A;
-        //NUM_ROWS_C=NUM_ROWS_B;
-
-        printf("Creating matrices and populating them with random data...\n");
-
-	double **a = malloc(NUM_COLUMNS_A * sizeof(double*));
-	double **b = malloc(NUM_COLUMNS_B * sizeof(double*));
-	double **c = malloc(NUM_COLUMNS_C * sizeof(double*));
-
-	/*
-	Initialise arrays with random data...
-	*/
+    /*
+     Initialise arrays with random data...
+    */
     for(uint32_t i = 0; i < NUM_COLUMNS_A; i++)
     {
         a[i] = malloc(NUM_ROWS_A * sizeof(double));
