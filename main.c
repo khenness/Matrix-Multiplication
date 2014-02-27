@@ -38,27 +38,22 @@ int main(int argc, char **argv)
         */
         int defined = 0;
         int num;
-        while(defined == 0){
-           printf("\nEnter NUM_COLUMNS_A:");
-           scanf("%d", &num);
-           NUM_COLUMNS_A = num;
-           printf("Enter NUM_ROWS_A:");
-           scanf("%d", &num);
-           NUM_ROWS_A = num;
-           printf("Enter NUM_COLUMNS_B:");
-           scanf("%d", &num);
-           NUM_COLUMNS_B = num;
-           printf("Enter NUM_ROWS_B:");
-           scanf("%d", &num);
-           NUM_ROWS_B = num;
-           printf("\n");
-
-           if(NUM_COLUMNS_A == NUM_ROWS_B){
-              defined = 1;
-           }else{
-             printf("The product of an %d x %d matrix and an %d x %d matrix is undefined. (NUM_COLUMNS_A must equal NUM_ROWS_B) Please try again.", NUM_COLUMNS_A, NUM_ROWS_A, NUM_COLUMNS_B,NUM_ROWS_B);
-           }
-        }
+        //if NUM_COLUMNS_A != NUM_ROWS_B the calculation is undefined.
+        printf("\nEnter NUM_COLUMNS_A + NUM_ROWS_B: ");
+        scanf("%d", &num);
+        NUM_COLUMNS_A = num;
+        NUM_ROWS_B = NUM_COLUMNS_A;
+        printf("Enter NUM_ROWS_A: ");
+        scanf("%d", &num);
+        NUM_ROWS_A = num;
+        printf("Enter NUM_COLUMNS_B: ");
+        scanf("%d", &num);
+        NUM_COLUMNS_B = num;
+        printf("\n");
+        NUM_COLUMNS_C =NUM_ROWS_A;
+        NUM_ROWS_C=NUM_COLUMNS_B;
+        //NUM_COLUMNS_C =NUM_COLUMNS_A;
+        //NUM_ROWS_C=NUM_ROWS_B;
 
         printf("Creating matrices and populating them with random data...\n");
 
