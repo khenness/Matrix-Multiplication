@@ -1,7 +1,7 @@
 /*
 CS3014 - CONCURRENT SYSTEMS I
 Neil Hyland (11511677)
-Kevin Hennessy ()
+Kevin Hennessy (11726665)
 NOTE: Compile with C99 standard!
 */
 #include "matrix.h"
