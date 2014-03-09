@@ -10,7 +10,7 @@
 /* the following two definitions of DEBUGGING control whether or not
    debugging information is written out. To put the program into
    debugging mode, uncomment the following line: */
-/*#define DEBUGGING(_x) _x */
+//#define DEBUGGING(_x) _x 
 /* to stop the printing of debugging information, use the following line: */
 #define DEBUGGING(_x)
 
