@@ -124,10 +124,7 @@ void matmul(double ** A, double ** B, double ** C, int a_dim1, int a_dim2, int b
 	int i = 0,
 		j = 0, 
 		k = 0;
-		
-	//omp_set_num_threads(THREAD_NO);
 
-	#pragma omp for
 	for (i = 0; i < a_dim1; i++ ) {
 		for (j = 0; j < b_dim2; j++ ) {
 			double sum = 0.0;
@@ -147,16 +144,15 @@ CS3014 Assignment 1 - Matrix Multiplication Function
 NEIL HYLAND (11511677)
 KEVIN HENNESSY ()
 */
-
-	int i, j, k;
-	
-	for(i = 0; i < a_dim1; i++)
+	#pragma omp parallel for collapse(2) shared(A, B, C, a_dim1, a_dim2, b_dim2)
+	for(int i = 0; i < a_dim1; i++)
 	{
-		for(j = 0; j < b_dim2; j++)
+		for(int j = 0; j < b_dim2; j++)
 		{
 			double temp_sum = 0.0;
 			
-			for(k = 0; k < a_dim2; k++)
+			//#pragma omp parallel for shared(temp_sum, A, B, C, a_dim2)
+			for(int k = 0; k < a_dim2; k++)
 			{
 				temp_sum += A[i][k] * B[k][j];
 			}
