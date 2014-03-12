@@ -1,9 +1,12 @@
+//test
+
 /* Test and timing harness program for developing a dense matrix
 	 multiplication routine for the CS3014 module */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <stdint.h>
 #include <assert.h>
 
 // OpenMP
@@ -137,24 +140,29 @@ void matmul(double ** A, double ** B, double ** C, int a_dim1, int a_dim2, int b
 }
 
 /* the fast version of matmul written by the team */
-void team_matmul(double ** A, double ** B, double ** C, int a_dim1, int a_dim2, int b_dim2)
+void team_matmul(double **restrict A, double **restrict B, double **restrict C, int a_dim1, int a_dim2, int b_dim2)
 {
 /*
 CS3014 Assignment 1 - Matrix Multiplication Function
 NEIL HYLAND (11511677)
 KEVIN HENNESSY ()
 */
+
 	#pragma omp parallel for collapse(2) shared(A, B, C, a_dim1, a_dim2, b_dim2)
-	for(int i = 0; i < a_dim1; i++)
+	for(uint32_t i = 0; i < a_dim1; i++)
 	{
-		for(int j = 0; j < b_dim2; j++)
+		for(uint32_t j = 0; j < b_dim2; j++)
 		{
 			double temp_sum = 0.0;
 			
-			//#pragma omp parallel for shared(temp_sum, A, B, C, a_dim2)
-			for(int k = 0; k < a_dim2; k++)
+			// #pragma omp parallel for shared(temp_sum, A, B, C, a_dim2)
+			for(uint32_t k = 0; k < a_dim2; k++)
 			{
-				temp_sum += A[i][k] * B[k][j];
+				double a_temp = A[i][k],
+					b_temp = B[k][j],
+					c_temp = a_temp * b_temp;
+
+				temp_sum += c_temp;
 			}
 			
 			C[i][j] = temp_sum;
