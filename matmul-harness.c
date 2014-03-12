@@ -5,7 +5,10 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <assert.h>
+
+// OpenMP
 #include <omp.h>
+#define THREAD_NO 8
 
 // SSE:
 #include <xmmintrin.h>
@@ -118,8 +121,13 @@ void check_result(double ** result, double ** control, int dim1, int dim2)
 void matmul(double ** A, double ** B, double ** C, int a_dim1, int a_dim2, int b_dim2)
 
 {
-	int i, j, k;
+	int i = 0,
+		j = 0, 
+		k = 0;
+		
+	//omp_set_num_threads(THREAD_NO);
 
+	#pragma omp for
 	for (i = 0; i < a_dim1; i++ ) {
 		for (j = 0; j < b_dim2; j++ ) {
 			double sum = 0.0;
@@ -140,9 +148,22 @@ NEIL HYLAND (11511677)
 KEVIN HENNESSY ()
 */
 
-	// this call here is just dummy code
-	// insert your own code instead
-	matmul(A, B, C, a_dim1, a_dim2, b_dim2); // TO REPLACE
+	int i, j, k;
+	
+	for(i = 0; i < a_dim1; i++)
+	{
+		for(j = 0; j < b_dim2; j++)
+		{
+			double temp_sum = 0.0;
+			
+			for(k = 0; k < a_dim2; k++)
+			{
+				temp_sum += A[i][k] * B[k][j];
+			}
+			
+			C[i][j] = temp_sum;
+		}
+	}
 }
 
 int main(int argc, char ** argv)
