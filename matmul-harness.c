@@ -11,15 +11,12 @@
 
 // OpenMP
 #include <omp.h>
-#define THREAD_NO 8
 
-// SSE:
-#include <xmmintrin.h>
 
 /* the following two definitions of DEBUGGING control whether or not
 	 debugging information is written out. To put the program into
 	 debugging mode, uncomment the following line: */
-//#define DEBUGGING(_x) _x 
+//#define DEBUGGING(_x) _x
 /* to stop the printing of debugging information, use the following line: */
 #define DEBUGGING(_x)
 
@@ -43,12 +40,7 @@ double ** new_empty_matrix(int dim1, int dim2)
 {
 	double ** result = malloc(sizeof(double*) * dim1);
 	double * new_matrix = malloc(sizeof(double) * dim1 * dim2);
-	
-	//double ** result = malloc(sizeof(double*) * dim1);
-	
-	// Memory aligned for SSE:
-	//double * new_matrix = (double*)memalign(16, sizeof(double) * dim1 * dim2);
-	
+
 	int i;
 
 	for ( i = 0; i < dim1; i++ ) {
@@ -86,13 +78,13 @@ double ** gen_random_matrix(int dim1, int dim2)
 	/* use the microsecond part of the current time as a pseudorandom seed */
 	gettimeofday(&seedtime, NULL);
 	seed = seedtime.tv_usec;
-	srandom(seed);
+	srand(seed);
 
 	/* fill the matrix with random numbers */
 	for ( i = 0; i < dim1; i++ ) {
 		for ( j = 0; j < dim2; j++ ) {
-			long long upper = random();
-			long long lower = random();
+			long long upper = rand();
+			long long lower = rand();
 			result[i][j] = (double)((upper << 32) | lower);
 		}
 	}
@@ -103,29 +95,33 @@ double ** gen_random_matrix(int dim1, int dim2)
 /* check the sum of absolute differences is within reasonable epsilon */
 void check_result(double ** result, double ** control, int dim1, int dim2)
 {
+/*
+Modified to check exact matrix values (no allowance for small variations).
+*/
 	int i, j;
-	double sum_abs_diff = 0.0;
-	const double EPSILON = 0.0625;
+  	int error = 0;
 
-	for ( i = 0; i < dim1; i++ ) {
-		for ( j = 0; j < dim2; j++ ) {
-			double diff = abs(control[i][j] - result[i][j]);
-			sum_abs_diff = sum_abs_diff + diff;
-		}
-	}
+  	for ( i = 0; i < dim1; i++ )
+  	{
+    	for ( j = 0; j < dim2; j++ )
+    	{
+			if(control[i][j] != result[i][j]){
+				error = 1;
+			}
+    	}
+  	}
 
-	if ( sum_abs_diff > EPSILON ) {
-		fprintf(stderr, "WARNING: sum of absolute differences (%f) > EPSILON (%f)\n",
-			sum_abs_diff, EPSILON);
+	if(error == 1)
+	{
+		printf("Matrices do not match!\n");
 	}
 }
 
 /* multiply matrix A times matrix B and put result in matrix C */
 void matmul(double ** A, double ** B, double ** C, int a_dim1, int a_dim2, int b_dim2)
-
 {
 	int i = 0,
-		j = 0, 
+		j = 0,
 		k = 0;
 
 	for (i = 0; i < a_dim1; i++ ) {
@@ -139,36 +135,156 @@ void matmul(double ** A, double ** B, double ** C, int a_dim1, int a_dim2, int b
 	}
 }
 
+
 /* the fast version of matmul written by the team */
-void team_matmul(double **restrict A, double **restrict B, double **restrict C, int a_dim1, int a_dim2, int b_dim2)
-{
+void team_matmul(double **restrict A, double **restrict B, double **restrict C, int p_a_dim1, int p_a_dim2, int p_b_dim2)
 /*
 CS3014 Assignment 1 - Matrix Multiplication Function
+
 NEIL HYLAND (11511677)
-KEVIN HENNESSY ()
+KEVIN HENNESSY (11726665)
+
+"stdint.h"'s uint32_t used as a fixed-width unsigned 32-bit integer value.
+"omp.h"'s pragmas are used to parallelise many of the applicable for loops.
+Large matrices are multiplied with a transpose matrix created from operand matrix B to allow better cache access.
+
 */
+{
+	/*
+	Store local register versions of the dimension variables:
+	*/
+	register uint32_t a_dim1 = p_a_dim1,
+			 		  a_dim2 = p_a_dim2,
+			 		  b_dim2 = p_b_dim2;
+	
 
-	#pragma omp parallel for collapse(2) shared(A, B, C, a_dim1, a_dim2, b_dim2)
-	for(uint32_t i = 0; i < a_dim1; i++)
-	{
-		for(uint32_t j = 0; j < b_dim2; j++)
-		{
-			double temp_sum = 0.0;
-			
-			// #pragma omp parallel for shared(temp_sum, A, B, C, a_dim2)
-			for(uint32_t k = 0; k < a_dim2; k++)
-			{
-				double a_temp = A[i][k],
-					b_temp = B[k][j],
-					c_temp = a_temp * b_temp;
+    if(a_dim1 < 50 && a_dim2 < 50 && b_dim2 < 50)
+    {
+        /*
+        Use the original (non-parallel) multiplication algorithm if
+        the dimensions are too small that OMP parallelisation yields no
+        faster runtime.
+        */
+        for(uint32_t i = 0; i < a_dim1; i++)
+        {
+            for(uint32_t j = 0; j < b_dim2; j++)
+            {
+                double temp_sum = 0.0,
+                	   a_temp = 0.0,
+                	   b_temp = 0.0;
 
-				temp_sum += c_temp;
-			}
-			
-			C[i][j] = temp_sum;
-		}
-	}
+                for(uint32_t k = 0; k < a_dim2; k++)
+                {
+                	a_temp = A[i][k];
+                	b_temp = B[k][j];
+                
+                    temp_sum += a_temp * b_temp;
+                }
+
+                C[i][j] = temp_sum;
+            }
+        }
+    }
+    else if(a_dim1 < 200 && a_dim2 < 200 && b_dim2 < 200)
+    {
+        /*
+        Small to small/medium matrix sizes are less efficient with transpose multiplication, so
+        use OMP-parallelised version of the standard/original algorithm
+        */
+        #pragma omp parallel for collapse(2)
+        for(uint32_t i = 0; i < a_dim1; i++)
+        {
+            for(uint32_t j = 0; j < b_dim2; j++)
+            {
+                double temp_sum = 0.0,
+                	   a_temp = 0.0,
+                	   b_temp = 0.0;
+
+                for(uint32_t k = 0; k < a_dim2; k++)
+                {
+                    a_temp = A[i][k],
+                    b_temp = B[k][j];
+
+                    temp_sum += a_temp * b_temp;
+                }
+
+                C[i][j] = temp_sum;
+            }
+        }
+    }
+    else
+    {
+        /*
+        Create a transpose matrix from matrix operand B (allowed to store more of the matrix on the cache).
+        */
+        double **T = malloc(sizeof(double*) * b_dim2);
+
+		/*
+		Create/allocate arrays (with simple OMP parallelisation).
+		*/
+        #pragma omp parallel for
+        for(uint32_t i = 0; i < b_dim2; i++)
+        {
+            double *temp_ptr = malloc(sizeof(double) * a_dim2);
+            T[i] = temp_ptr;
+        }
+        
+        /*
+        Create transposed matrix elements (with simple OMP parallelisation).
+        */
+        #pragma omp parallel for
+        for(uint32_t i = 0; i < a_dim2; i++)
+        {
+        	double temp = 0.0;
+        	
+        	for(uint32_t j = 0; j < b_dim2; j++)
+        	{
+        		temp = B[i][j];
+            	T[j][i] = temp;
+            }
+        }
+
+		/*
+		Perform the matrix multiplication (with OMP parallelisation on the first two for loops).
+		*/
+        #pragma omp parallel for collapse(2)
+        for(uint32_t i = 0; i < a_dim1; i++)
+        {
+            for(uint32_t j = 0; j < b_dim2; j++)
+            {
+                double temp_sum = 0.0,
+                	   a_temp = 0.0,
+                	   b_temp = 0.0;
+
+                for(uint32_t k = 0; k < a_dim2; k++)
+                {
+                    a_temp = A[i][k];
+                    
+                    /*
+                    Reversing k & j from original algorithm due to the transpose matrix multiplication.
+                    */
+                    b_temp = T[j][k];
+                    
+                    temp_sum += a_temp * b_temp;
+                }
+
+                C[i][j] = temp_sum;
+            }
+        }
+
+		/*
+		Dispose & garbage collect the transpose matrix (with simple OMP parallelisation).
+		*/
+        #pragma omp parallel for
+        for(uint32_t i = 0; i < b_dim2; i++)
+        {
+            double *temp_ptr = T[i];
+            free(temp_ptr);
+        }
+        free(T);
+    }
 }
+
 
 int main(int argc, char ** argv)
 {
@@ -229,3 +345,4 @@ int main(int argc, char ** argv)
 
 	return 0;
 }
+
