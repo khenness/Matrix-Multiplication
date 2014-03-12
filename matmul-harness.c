@@ -116,15 +116,10 @@ void check_result(double ** result, double ** control, int dim1, int dim2)
 
 /* multiply matrix A times matrix B and put result in matrix C */
 void matmul(double ** A, double ** B, double ** C, int a_dim1, int a_dim2, int b_dim2)
-/*
-CS3014 Assignment 1 - Matrix Multiplication Function
-NEIL HYLAND (11511677)
-KEVIN HENNESSY ()
-*/
+
 {
 	int i, j, k;
 
-	// TO REPLACE:
 	for (i = 0; i < a_dim1; i++ ) {
 		for (j = 0; j < b_dim2; j++ ) {
 			double sum = 0.0;
@@ -139,9 +134,15 @@ KEVIN HENNESSY ()
 /* the fast version of matmul written by the team */
 void team_matmul(double ** A, double ** B, double ** C, int a_dim1, int a_dim2, int b_dim2)
 {
+/*
+CS3014 Assignment 1 - Matrix Multiplication Function
+NEIL HYLAND (11511677)
+KEVIN HENNESSY ()
+*/
+
 	// this call here is just dummy code
 	// insert your own code instead
-	matmul(A, B, C, a_dim1, a_dim2, b_dim2);
+	matmul(A, B, C, a_dim1, a_dim2, b_dim2); // TO REPLACE
 }
 
 int main(int argc, char ** argv)
